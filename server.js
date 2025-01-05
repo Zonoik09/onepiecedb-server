@@ -15,43 +15,64 @@ app.use(express.json());
 
 // Cargar datos desde el archivo JSON
 const data = JSON.parse(fs.readFileSync('one_piece_characters.json', 'utf-8'));
-const { groups, members } = data;
+const { groups, members } = data; // Declaramos `groups` y `members` como constantes.
 
-// Endpoint POST para agregar un nuevo miembro
+// Endpoint POST para obtener los miembros de un grupo
 app.post('/api/members', (req, res) => {
-  const { name, role, crew, bounty, devilFruit, weapon, image, group } = req.body;
+  const { group } = req.body;
 
-  // Verificar si el grupo existe
-  if (!groups.includes(group)) {
-    return res.status(400).json({ error: 'Grupo no encontrado' });
+  if (!members[group]) {
+    return res.status(404).json({ error: 'Grupo no encontrado' });
   }
 
-  // Crear el nuevo miembro
-  const newMember = { name, role, crew, bounty, devilFruit, weapon, image };
-
-  // Agregar el nuevo miembro al grupo correspondiente
-  members[group].push(newMember);
-
-  // Guardar los datos actualizados en el archivo JSON
-  fs.writeFileSync('one_piece_characters.json', JSON.stringify({ groups, members }, null, 2));
-
-  res.status(201).json(newMember);
+  res.json(members[group]);
 });
 
-// Endpoint GET para obtener los grupos
-app.get('/api/groups', (req, res) => {
+// Endpoint POST para obtener información de un miembro específico
+app.post('/api/members/item', (req, res) => {
+  const { name } = req.body;
+
+  for (const group in members) {
+    const member = members[group].find((m) => m.name.toLowerCase() === name.toLowerCase());
+    if (member) {
+      return res.json(member);
+    }
+  }
+
+  res.status(404).json({ error: 'Miembro no encontrado' });
+});
+
+// Endpoint POST para buscar ítems según criterios
+app.post('/api/search', (req, res) => {
+  const { query } = req.body;
+
+  const results = [];
+  for (const group in members) {
+    results.push(...members[group].filter((m) =>
+      Object.values(m).some((value) => value.toString().toLowerCase().includes(query.toLowerCase()))
+    ));
+  }
+
+  res.json(results);
+});
+
+// Endpoint POST para obtener los grupos
+app.post('/api/groups', (req, res) => {
   res.json(groups);
 });
 
-// Endpoint GET para obtener los miembros de un grupo específico
-app.get('/api/members/:group', (req, res) => {
-  const group = req.params.group;
+
+// Endpoint POST para obtener los miembros de un grupo específico
+app.post('/api/members/group', (req, res) => {
+  const { group } = req.body;
+
   if (members[group]) {
     res.json(members[group]);
   } else {
     res.status(404).json({ error: 'Grupo no encontrado' });
   }
 });
+
 
 // Iniciar el servidor
 app.listen(PORT, () => {
