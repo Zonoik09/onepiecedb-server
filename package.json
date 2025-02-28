@@ -13,6 +13,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "one-piece-server": "file:"
+    "fs": "^0.0.1-security",
+    "one-piece-server": "file:",
+    "path": "^0.12.7"
   }
 }
